@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jaysons Dashboard">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Jaysons Dashboard</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">JAYSONS INTERNATIONAL</div>
+    <h1>Business Dashboard</h1>
+  </div>
+  <button id="refreshBtn" class="iconbtn" aria-label="Refresh">↻</button>
+</header>
+
+<main>
+  <section id="home" class="screen active">
+    <div class="filters card">
+      <div class="filterrow">
+        <label>Year<select id="yearFilter"><option value="ALL">All Years</option></select></label>
+        <label>Month<select id="monthFilter"><option value="ALL">All Months</option></select></label>
+      </div>
+      <div class="filterrow">
+        <label>Company<select id="companyFilter"><option value="ALL">All Companies</option></select></label>
+        <label>Party<select id="partyFilter"><option value="ALL">All Parties</option></select></label>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="metric card"><span>Sales</span><strong id="salesTotal">₹0</strong></div>
+      <div class="metric card"><span>Receipts</span><strong id="receiptTotal">₹0</strong></div>
+      <div class="metric card"><span>Orders</span><strong id="orderTotal">0</strong></div>
+      <div class="metric card"><span>Pending</span><strong id="pendingTotal">0</strong></div>
+    </div>
+
+    <div class="card">
+      <div class="cardtitle">Sales Trend</div>
+      <canvas id="salesChart" height="180"></canvas>
+    </div>
+
+    <div class="card status">
+      <div><span class="dot"></span><span id="statusText">Loading data…</span></div>
+      <small id="lastUpdated"></small>
+    </div>
+  </section>
+
+  <section id="sales" class="screen">
+    <div class="sectionhead"><h2>Sales</h2><span id="salesCount"></span></div>
+    <div id="salesList" class="list"></div>
+  </section>
+
+  <section id="receipts" class="screen">
+    <div class="sectionhead"><h2>Receipts</h2><span id="receiptCount"></span></div>
+    <div class="card"><div class="bigamount" id="receiptScreenTotal">₹0</div><div class="muted">Bank receipts for selected filters</div></div>
+    <div id="receiptList" class="list"></div>
+  </section>
+
+  <section id="orders" class="screen">
+    <div class="sectionhead"><h2>Order Pending</h2></div>
+    <div class="card empty" id="ordersEmpty">No order data is currently available.</div>
+    <div id="orderList" class="list"></div>
+  </section>
+
+  <section id="settings" class="screen">
+    <div class="sectionhead"><h2>Sync & Settings</h2></div>
+    <div class="card">
+      <label>Apps Script Web App URL
+        <input id="apiUrl" type="url" value="https://script.google.com/macros/s/AKfycbzwcazUzjP9fk9hMTZFQh95X1ijtBD8sOQFgme3Lh5Zz8r42ckPUWwqFu29RcYKbq-n/exec">
+      </label>
+      <button id="saveUrl" class="primary">Save URL</button>
+      <button id="syncBtn" class="secondary">Sync / Refresh Data</button>
+      <p class="hint">Use the deployed Apps Script URL that serves your duplicate-safe dashboard data.</p>
+    </div>
+    <div class="card">
+      <div class="cardtitle">How to install</div>
+      <p class="hint">Open this website in Safari → Share → Add to Home Screen.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button data-screen="home" class="tab active">⌂<span>Home</span></button>
+  <button data-screen="sales" class="tab">₹<span>Sales</span></button>
+  <button data-screen="receipts" class="tab">▣<span>Receipts</span></button>
+  <button data-screen="orders" class="tab">□<span>Orders</span></button>
+  <button data-screen="settings" class="tab">⚙<span>Settings</span></button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("service-worker.js").catch(()=>{});}</script>
