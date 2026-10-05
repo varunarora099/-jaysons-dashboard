@@ -8,7 +8,31 @@ function normRow(r){let o={...r}; for(const k of Object.keys(o)){if(o[k]===null|
 function getDate(r){return r.Date||r.date||r.VoucherDate||r.voucherDate||""}
 function getParty(r){return r.Party||r.party||r.Ledger||r.LedgerName||""}
 function getCompany(r){return r.Company||r.company||""}
-function getAmount(r){return Number(r.Amount||r.amount||r.BankAmount||r.bankAmount||0)}
+function function getAmount(r){
+  const value =
+    r.Amount ??
+    r.amount ??
+    r["Sales Amount"] ??
+    r["SalesAmount"] ??
+    r.BankAmount ??
+    r["Bank Amount"] ??
+    r.bankAmount ??
+    0;
+
+  if (typeof value === "number") {
+    return isFinite(value) ? value : 0;
+  }
+
+  const cleaned = String(value)
+    .replace(/₹/g, "")
+    .replace(/,/g, "")
+    .replace(/\s/g, "")
+    .trim();
+
+  const n = parseFloat(cleaned);
+
+  return isFinite(n) ? n : 0;
+}
 function dateObj(s){let d=new Date(s); if(isNaN(d)) {let m=String(s).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/); if(m)d=new Date(+m[3],+m[2]-1,+m[1])} return d}
 function rowYear(r){let d=dateObj(getDate(r));return isNaN(d)?String(getDate(r)).slice(0,4):String(d.getFullYear())}
 function rowMonth(r){let d=dateObj(getDate(r));return isNaN(d)?"":months[d.getMonth()]}
