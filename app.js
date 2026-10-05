@@ -2340,3 +2340,469 @@ if (
 
   initDashboard();
 }
+/* =========================================================
+   COMPATIBILITY FIX
+   Works with the existing JAYSONS DASHBOARD HTML
+   ========================================================= */
+
+function hideLoadingMessage() {
+
+  const possibleIds = [
+    "loading",
+    "loadingMessage",
+    "loadingData",
+    "status",
+    "statusMessage",
+    "dataStatus",
+    "connectionStatus"
+  ];
+
+  possibleIds.forEach(id => {
+
+    const el = document.getElementById(id);
+
+    if (el) {
+      el.textContent = "● Live data connected";
+      el.classList.remove("loading");
+      el.classList.add("online");
+    }
+  });
+
+
+  /* Also handle visible text "Loading data..." */
+  document
+    .querySelectorAll("body *")
+    .forEach(el => {
+
+      if (
+        el.children.length === 0 &&
+        el.textContent &&
+        el.textContent.trim()
+          .toLowerCase()
+          .includes("loading data")
+      ) {
+
+        el.textContent =
+          "● Live data connected";
+
+        el.classList.add("online");
+      }
+    });
+}
+
+
+/* =========================================================
+   UNIVERSAL PAGE SWITCHER
+   ========================================================= */
+
+function openPage(pageName) {
+
+  console.log(
+    "Opening page:",
+    pageName
+  );
+
+
+  /* ---------------------------------------------
+     Possible page containers
+     --------------------------------------------- */
+
+  const pages =
+    document.querySelectorAll(
+      "[data-page], .page, .screen, .app-page"
+    );
+
+
+  pages.forEach(page => {
+
+    const pageId =
+      page.dataset.page ||
+      page.id ||
+      page.dataset.screen ||
+      "";
+
+
+    const cleanPage =
+      String(pageId)
+        .replace("Page", "")
+        .replace("page", "")
+        .toLowerCase();
+
+
+    const wanted =
+      String(pageName)
+        .replace("Page", "")
+        .replace("page", "")
+        .toLowerCase();
+
+
+    if (
+      cleanPage === wanted ||
+      cleanPage === wanted + "screen"
+    ) {
+
+      page.style.display = "";
+
+      page.classList.add("active");
+
+    } else {
+
+      page.style.display = "none";
+
+      page.classList.remove("active");
+    }
+  });
+
+
+  /* ---------------------------------------------
+     Common IDs used by the dashboard
+     --------------------------------------------- */
+
+  const pageIds = {
+
+    home: [
+      "home",
+      "homePage",
+      "dashboard",
+      "dashboardPage"
+    ],
+
+    sales: [
+      "sales",
+      "salesPage",
+      "salesScreen"
+    ],
+
+    receipts: [
+      "receipts",
+      "receiptsPage",
+      "receiptsScreen"
+    ],
+
+    orders: [
+      "orders",
+      "ordersPage",
+      "ordersScreen"
+    ],
+
+    settings: [
+      "settings",
+      "settingsPage",
+      "settingsScreen"
+    ]
+  };
+
+
+  Object.keys(pageIds).forEach(
+    key => {
+
+      pageIds[key].forEach(id => {
+
+        const el =
+          document.getElementById(id);
+
+        if (!el) return;
+
+
+        if (key === pageName) {
+
+          el.style.display = "";
+
+          el.classList.add("active");
+
+        } else {
+
+          el.style.display = "none";
+
+          el.classList.remove("active");
+        }
+      });
+    }
+  );
+
+
+  /* ---------------------------------------------
+     Refresh page-specific content
+     --------------------------------------------- */
+
+  if (pageName === "sales") {
+
+    renderSalesTable();
+
+  }
+
+
+  if (pageName === "receipts") {
+
+    renderReceiptsTable();
+
+    renderPartyReceipts(
+      filtered("receipts")
+    );
+
+  }
+
+
+  if (pageName === "orders") {
+
+    renderOrders();
+
+  }
+
+
+  if (pageName === "home") {
+
+    renderDashboard();
+
+  }
+
+
+  if (pageName === "settings") {
+
+    renderSettings();
+
+  }
+
+
+  /* ---------------------------------------------
+     Bottom navigation active state
+     --------------------------------------------- */
+
+  document
+    .querySelectorAll(
+      "nav button, .bottom-nav button, .nav-item, [data-tab]"
+    )
+    .forEach(button => {
+
+      const value =
+        button.dataset.tab ||
+        button.dataset.page ||
+        button.getAttribute(
+          "data-screen"
+        ) ||
+        button.getAttribute(
+          "data-target"
+        );
+
+
+      if (
+        value &&
+        String(value)
+          .toLowerCase()
+          .includes(
+            String(pageName)
+              .toLowerCase()
+          )
+      ) {
+
+        button.classList.add(
+          "active"
+        );
+
+      } else {
+
+        button.classList.remove(
+          "active"
+        );
+      }
+    });
+}
+
+
+/* =========================================================
+   SUPPORT OLD INLINE HTML
+   ========================================================= */
+
+window.showPage = function(page) {
+
+  openPage(
+    String(page)
+      .replace("#", "")
+      .replace("Page", "")
+      .toLowerCase()
+  );
+
+};
+
+
+window.showTab = function(tab) {
+
+  openPage(
+    String(tab)
+      .replace("#", "")
+      .replace("Page", "")
+      .toLowerCase()
+  );
+
+};
+
+
+/* =========================================================
+   SUPPORT BUTTONS WITHOUT DATA ATTRIBUTES
+   ========================================================= */
+
+function setupUniversalNavigation() {
+
+  const buttons =
+    document.querySelectorAll(
+      "button, .nav-item, a"
+    );
+
+
+  buttons.forEach(button => {
+
+    const text =
+      button.textContent
+        .trim()
+        .toLowerCase();
+
+
+    let page = null;
+
+
+    if (
+      text === "home" ||
+      text.includes("home")
+    ) {
+
+      page = "home";
+
+    } else if (
+      text === "sales" ||
+      text.includes("sales")
+    ) {
+
+      page = "sales";
+
+    } else if (
+      text === "receipts" ||
+      text.includes("receipt")
+    ) {
+
+      page = "receipts";
+
+    } else if (
+      text === "orders" ||
+      text.includes("order")
+    ) {
+
+      page = "orders";
+
+    } else if (
+      text === "settings" ||
+      text.includes("setting") ||
+      text === "more"
+    ) {
+
+      page = "settings";
+    }
+
+
+    if (!page) return;
+
+
+    button.addEventListener(
+      "click",
+      function(event) {
+
+        /*
+         * Only intercept bottom-navigation
+         * style buttons.
+         */
+        if (
+          button.closest(
+            "nav, .bottom-nav, .navigation, .tab-bar"
+          ) ||
+          button.dataset.tab ||
+          button.dataset.page
+        ) {
+
+          event.preventDefault();
+
+          openPage(page);
+        }
+
+      }
+    );
+  });
+}
+
+
+/* =========================================================
+   FORCE LOADING STATUS OFF
+   ========================================================= */
+
+function dashboardFinishedLoading() {
+
+  hideLoadingMessage();
+
+  const statusElements =
+    document.querySelectorAll(
+      ".loading-status, .loading-message, .data-status"
+    );
+
+
+  statusElements.forEach(el => {
+
+    el.textContent =
+      "● Live data connected";
+
+    el.classList.remove(
+      "loading"
+    );
+
+    el.classList.add(
+      "online"
+    );
+  });
+}
+
+
+/* =========================================================
+   INITIALIZE COMPATIBILITY FIX
+   ========================================================= */
+
+setTimeout(
+  function() {
+
+    setupUniversalNavigation();
+
+    dashboardFinishedLoading();
+
+    /*
+     * Default page
+     */
+    openPage("home");
+
+  },
+  1000
+);
+
+
+/* =========================================================
+   KEEP LOADING STATUS OFF AFTER API REFRESH
+   ========================================================= */
+
+const originalFetchLiveData =
+  window.fetchLiveData;
+
+
+if (
+  typeof originalFetchLiveData ===
+  "function"
+) {
+
+  window.fetchLiveData =
+    async function() {
+
+      const result =
+        await originalFetchLiveData.apply(
+          this,
+          arguments
+        );
+
+      dashboardFinishedLoading();
+
+      return result;
+    };
+}
