@@ -29,10 +29,15 @@ function dateObj(v){
   const d=new Date(s); return isNaN(d)?null:d;
 }
 function getDate(r){return clean(r.Date ?? r.date ?? r["Voucher Date"] ?? r["Order Date"]);}
-function getYear(r){
-  if(clean(r.Year)) return clean(r.Year);
-  const d=dateObj(getDate(r)); return d ? String(d.getFullYear()) : "";
+function getFY(r){
+  const raw=clean(r.FY ?? r.FinancialYear ?? r["Financial Year"]);
+  if(raw) return raw.replace(/^FY\s*/i, "");
+  const d=dateObj(getDate(r));
+  if(!d) return "";
+  const y=d.getFullYear(), m=d.getMonth()+1;
+  return m>=4 ? `${y}-${String((y+1)%100).padStart(2,"0")}` : `${y-1}-${String(y%100).padStart(2,"0")}`;
 }
+function getYear(r){ return getFY(r); }
 function getMonthNo(r){
   const d=dateObj(getDate(r)); if(d) return d.getMonth()+1;
   const m=clean(r.Month).toLowerCase();
@@ -50,13 +55,13 @@ function receiptValue(r){return parseMoney(r["Bank Amount"] ?? r.BankAmount ?? r
 function salesQty(r){return parseNumber(r.Quantity ?? r.Qty ?? r["Sales Qty"] ?? r["Sold Qty"]);}
 function orderQty(r){return parseNumber(r["Order Qty"] ?? r.OrderQty ?? r["Order Quantity"] ?? r.Quantity ?? r.Qty);}
 
-function normSale(r){return {...r,_date:getDate(r),_year:getYear(r),_month:getMonthNo(r),_company:getCompany(r),_party:getParty(r),_invoice:getInvoice(r),_qty:salesQty(r),_amount:salesValue(r)};}
-function normReceipt(r){return {...r,_date:getDate(r),_year:getYear(r),_month:getMonthNo(r),_company:getCompany(r),_party:getParty(r),_amount:receiptValue(r)};}
-function normOrder(r){return {...r,_date:getDate(r),_year:getYear(r),_month:getMonthNo(r),_company:getCompany(r),_party:getParty(r),_qty:orderQty(r)};}
+function normSale(r){return {...r,_date:getDate(r),_year:getFY(r),_month:getMonthNo(r),_company:getCompany(r),_party:getParty(r),_invoice:getInvoice(r),_qty:salesQty(r),_amount:salesValue(r)};}
+function normReceipt(r){return {...r,_date:getDate(r),_year:getFY(r),_month:getMonthNo(r),_company:getCompany(r),_party:getParty(r),_amount:receiptValue(r)};}
+function normOrder(r){return {...r,_date:getDate(r),_year:getFY(r),_month:getMonthNo(r),_company:getCompany(r),_party:getParty(r),_qty:orderQty(r)};}
 
 function applyFilters(rows){
   return rows.filter(r =>
-    (state.filters.year === "ALL" || getYear(r) === state.filters.year) &&
+    (state.filters.year === "ALL" || getFY(r) === state.filters.year) &&
     (state.filters.month === "ALL" || String(getMonthNo(r)) === String(state.filters.month)) &&
     (state.filters.company === "ALL" || getCompany(r) === state.filters.company) &&
     (state.filters.party === "ALL" || getParty(r) === state.filters.party)
@@ -77,7 +82,7 @@ function updateTimestamp(){
 function populateFilters(){
   const all=[...state.data.sales,...state.data.receipts,...state.data.orders];
   const unique=a=>[...new Set(a.filter(Boolean).map(String))].sort((x,y)=>x.localeCompare(y,undefined,{numeric:true}));
-  const years=unique(all.map(getYear)), companies=unique(all.map(getCompany)), parties=unique(all.map(getParty));
+  const years=unique(all.map(getFY)), companies=unique(all.map(getCompany)), parties=unique(all.map(getParty));
   fillSelect("yearFilter",years,"All Years");
   fillSelect("companyFilter",companies,"All Companies");
   fillSelect("partyFilter",parties,"All Parties");
@@ -128,8 +133,8 @@ function renderHome(){
 }
 function renderChart(rows){
   const c=$("salesChart"); if(!c)return; const ctx=c.getContext("2d"), w=c.clientWidth||600,h=180,dpr=devicePixelRatio||1;c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
-  const months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"], vals=Array(12).fill(0);
-  rows.forEach(r=>{const m=getMonthNo(r);if(m)vals[m-1]+=r._amount;}); const max=Math.max(...vals,1); const pad=18, bw=(w-pad*2)/12*0.62;
+  const months=["Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar"], vals=Array(12).fill(0);
+  rows.forEach(r=>{const m=getMonthNo(r);if(m){const i=m>=4?m-4:m+8; vals[i]+=r._amount;}}); const max=Math.max(...vals,1); const pad=18, bw=(w-pad*2)/12*0.62;
   ctx.font="10px -apple-system, sans-serif";ctx.fillStyle="#6b7280";
   vals.forEach((v,i)=>{const x=pad+i*(w-pad*2)/12+((w-pad*2)/12-bw)/2;const bh=(v/max)*(h-42);ctx.fillStyle="#111827";ctx.fillRect(x,h-25-bh,bw,bh);ctx.fillStyle="#6b7280";ctx.fillText(months[i],x,h-8);});
 }
